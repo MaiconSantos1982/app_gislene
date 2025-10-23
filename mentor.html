@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso - Mentor</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-white">
+    <div class="container">
+        <div class="row justify-content-center align-items-center min-vh-100">
+            <div class="col-12 col-md-6 col-lg-4">
+                
+                <!-- Logo/Título -->
+                <div class="text-center mb-5">
+                    <h1 class="fw-bold">Mentoria</h1>
+                    <p class="text-muted">Área do Mentor</p>
+                </div>
+
+                <!-- Card de Acesso -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4 text-center">
+                        <i class="bi bi-person-check display-1 text-primary mb-3"></i>
+                        <h5 class="mb-3">Bem-vindo!</h5>
+                        <p class="text-muted mb-4">Clique no botão abaixo para acessar o sistema</p>
+                        <div class="d-grid">
+                            <button id="btnAcessar" class="btn btn-primary btn-lg">
+                                Acessar Sistema
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <script>
+        // Acesso direto do mentor
+        document.getElementById('btnAcessar').addEventListener('click', () => {
+            localStorage.setItem('mentor_acesso_direto', 'true');
+            window.location.href = 'mentor-dashboard.html';
+        });
+    </script>
+</body>
+</html>
