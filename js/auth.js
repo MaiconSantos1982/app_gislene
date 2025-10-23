@@ -125,15 +125,20 @@ document.getElementById('formCriarConta')?.addEventListener('submit', async (e) 
     }
     
     try {
-        // 1. Verificar se o email existe na tabela de usuários (cadastrado pelo mentor)
+        // 1. Verificar se o email existe na tabela (cadastrado pelo mentor)
         const { data: usuarioExistente, error: erroVerificar } = await supabase
             .from('appgi_mentoria_usuarios')
             .select('id, auth_id, tipo')
             .eq('email', email)
             .eq('tipo', 'cliente')
-            .single();
+            .maybeSingle(); // Usar maybeSingle ao invés de single
         
-        if (erroVerificar || !usuarioExistente) {
+        if (erroVerificar) {
+            console.error('Erro ao verificar:', erroVerificar);
+            throw erroVerificar;
+        }
+        
+        if (!usuarioExistente) {
             mostrarAlerta('Email não encontrado. Verifique com seu mentor.', 'danger');
             return;
         }
@@ -145,7 +150,7 @@ document.getElementById('formCriarConta')?.addEventListener('submit', async (e) 
             return;
         }
         
-        // 3. Criar usuário no Supabase Auth
+        // 3. Criar usuário no Supabase Auth COM autoConfirm
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email: email,
             password: senha,
@@ -157,26 +162,48 @@ document.getElementById('formCriarConta')?.addEventListener('submit', async (e) 
             }
         });
         
-        if (authError) throw authError;
+        if (authError) {
+            console.error('Erro auth:', authError);
+            throw authError;
+        }
         
-        // 4. Atualizar registro com auth_id
-        const { error: updateError } = await supabase
-            .from('appgi_mentoria_usuarios')
-            .update({ auth_id: authData.user.id })
-            .eq('id', usuarioExistente.id);
+        console.log('Usuário Auth criado:', authData);
         
-        if (updateError) throw updateError;
+        // 4. Verificar se precisa atualizar (pode já ter sido feito pelo trigger)
+        if (authData.user && !usuarioExistente.auth_id) {
+            const { error: updateError } = await supabase
+                .from('appgi_mentoria_usuarios')
+                .update({ auth_id: authData.user.id })
+                .eq('id', usuarioExistente.id);
+            
+            if (updateError) {
+                console.error('Erro ao atualizar:', updateError);
+                // Não lançar erro aqui, pois o trigger pode ter feito
+            }
+        }
         
-        mostrarAlerta('Conta criada com sucesso! Fazendo login...', 'success');
+        mostrarAlerta('Conta criada com sucesso! Redirecionando...', 'success');
         
-        // 5. Redirecionar para dashboard
-        setTimeout(() => {
-            window.location.href = 'cliente-dashboard.html';
+        // 5. Fazer login automático e redirecionar
+        setTimeout(async () => {
+            // Tentar login
+            const { error: loginError } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: senha
+            });
+            
+            if (loginError) {
+                console.error('Erro no login:', loginError);
+                mostrarAlerta('Conta criada! Faça login manualmente.', 'info');
+                document.getElementById('linkVoltarLogin').click();
+            } else {
+                window.location.href = 'cliente-dashboard.html';
+            }
         }, 1500);
         
     } catch (error) {
         console.error('Erro ao criar conta:', error);
-        mostrarAlerta(error.message, 'danger');
+        mostrarAlerta(`Erro: ${error.message}`, 'danger');
     }
 });
 
