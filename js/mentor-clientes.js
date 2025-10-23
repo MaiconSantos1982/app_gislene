@@ -175,7 +175,7 @@ async function salvarNovoCliente() {
     const dados = {
         nome: document.getElementById('nomeCliente').value.trim(),
         email: document.getElementById('emailCliente').value.trim(),
-        telefone: document.getElementById('telefoneCliente').value.trim(),
+        telefone: removerMascaraTelefone(document.getElementById('telefoneCliente').value.trim())
         empresa: document.getElementById('empresaCliente').value.trim(),
         nicho: document.getElementById('nichoCliente').value.trim(),
         porqueProcesso: document.getElementById('porqueProcesso').value.trim(),
@@ -606,7 +606,7 @@ document.getElementById('btnSalvarEdicao')?.addEventListener('click', async () =
     const dados = {
         nome: document.getElementById('editNome').value.trim(),
         email: document.getElementById('editEmail').value.trim(),
-        telefone: document.getElementById('editTelefone').value.trim(),
+        telefone: removerMascaraTelefone(document.getElementById('editTelefone').value.trim())
         empresa: document.getElementById('editEmpresa').value.trim(),
         nicho: document.getElementById('editNicho').value.trim()
     };
