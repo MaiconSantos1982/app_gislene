@@ -2,6 +2,30 @@ let usuarioLogado = null;
 
 // Verificar autenticação
 async function verificarAutenticacao() {
+    // Verificar se tem acesso direto (sem autenticação)
+    const acessoDireto = localStorage.getItem('mentor_acesso_direto');
+    
+    if (acessoDireto === 'true') {
+        // Buscar primeiro mentor do sistema
+        const { data: mentor, error } = await supabase
+            .from('appgi_mentoria_usuarios')
+            .select('*')
+            .eq('tipo', 'mentor')
+            .limit(1)
+            .single();
+        
+        if (mentor) {
+            usuarioLogado = mentor;
+            document.getElementById('nomeUsuario').textContent = mentor.nome;
+            carregarDashboard();
+        } else {
+            alert('Nenhum mentor cadastrado no sistema. Por favor, cadastre um mentor primeiro.');
+            window.location.href = 'index.html';
+        }
+        return;
+    }
+    
+    // Fluxo normal de autenticação
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session) {
@@ -39,13 +63,19 @@ async function carregarDashboard() {
             .eq('mentor_id', usuarioLogado.id)
             .single();
         
-        if (statsError) throw statsError;
-        
-        // Atualizar cards de estatísticas
-        document.getElementById('totalClientes').textContent = stats.total_clientes || 0;
-        document.getElementById('tarefasPendentes').textContent = stats.tarefas_pendentes || 0;
-        document.getElementById('tarefasAtrasadas').textContent = stats.tarefas_atrasadas || 0;
-        document.getElementById('taxaConclusao').textContent = `${stats.taxa_conclusao || 0}%`;
+        if (statsError) {
+            // Se não houver dados, mostrar zeros
+            document.getElementById('totalClientes').textContent = 0;
+            document.getElementById('tarefasPendentes').textContent = 0;
+            document.getElementById('tarefasAtrasadas').textContent = 0;
+            document.getElementById('taxaConclusao').textContent = '0%';
+        } else {
+            // Atualizar cards de estatísticas
+            document.getElementById('totalClientes').textContent = stats.total_clientes || 0;
+            document.getElementById('tarefasPendentes').textContent = stats.tarefas_pendentes || 0;
+            document.getElementById('tarefasAtrasadas').textContent = stats.tarefas_atrasadas || 0;
+            document.getElementById('taxaConclusao').textContent = `${stats.taxa_conclusao || 0}%`;
+        }
         
         // Carregar últimos clientes
         await carregarUltimosClientes();
@@ -123,6 +153,7 @@ function formatarData(dataString) {
 // Logout
 document.getElementById('btnLogout')?.addEventListener('click', async (e) => {
     e.preventDefault();
+    localStorage.removeItem('mentor_acesso_direto');
     await supabase.auth.signOut();
     window.location.href = 'index.html';
 });
