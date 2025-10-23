@@ -467,6 +467,7 @@ function formatarData(dataString) {
 // Logout
 document.getElementById('btnLogout')?.addEventListener('click', async (e) => {
     e.preventDefault();
+    localStorage.removeItem('mentor_acesso_direto'); // ADICIONAR ESTA LINHA
     await supabase.auth.signOut();
     window.location.href = 'index.html';
 });
