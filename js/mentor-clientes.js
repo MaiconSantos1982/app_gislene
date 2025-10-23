@@ -508,3 +508,265 @@ document.getElementById('btnLogout')?.addEventListener('click', async (e) => {
 
 // Inicializar
 verificarAutenticacao();
+
+// ========== CRUD: EDITAR CLIENTE ==========
+
+let clienteEditando = null;
+
+// Abrir modal de edição
+function abrirEditarCliente(clienteId) {
+    const cliente = clienteAtual;
+    
+    if (!cliente) return;
+    
+    clienteEditando = cliente;
+    
+    // Preencher formulário
+    document.getElementById('editClienteId').value = clienteId;
+    document.getElementById('editUsuarioId').value = cliente.usuario.id || '';
+    document.getElementById('editNome').value = cliente.usuario.nome;
+    document.getElementById('editEmail').value = cliente.usuario.email;
+    document.getElementById('editTelefone').value = cliente.usuario.telefone || '';
+    document.getElementById('editEmpresa').value = cliente.empresa || '';
+    document.getElementById('editNicho').value = cliente.nicho_atuacao || '';
+    
+    // Fechar modal de detalhes
+    bootstrap.Modal.getInstance(document.getElementById('modalDetalhesCliente')).hide();
+    
+    // Abrir modal de edição
+    new bootstrap.Modal(document.getElementById('modalEditarCliente')).show();
+}
+
+// Salvar edição
+document.getElementById('btnSalvarEdicao')?.addEventListener('click', async () => {
+    const form = document.getElementById('formEditarCliente');
+    
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const clienteId = document.getElementById('editClienteId').value;
+    const usuarioId = document.getElementById('editUsuarioId').value;
+    
+    const dados = {
+        nome: document.getElementById('editNome').value.trim(),
+        email: document.getElementById('editEmail').value.trim(),
+        telefone: document.getElementById('editTelefone').value.trim(),
+        empresa: document.getElementById('editEmpresa').value.trim(),
+        nicho: document.getElementById('editNicho').value.trim()
+    };
+    
+    const btnSalvar = document.getElementById('btnSalvarEdicao');
+    btnSalvar.disabled = true;
+    btnSalvar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Salvando...';
+    
+    try {
+        // Atualizar usuário
+        const { error: usuarioError } = await supabase
+            .from('appgi_mentoria_usuarios')
+            .update({
+                nome: dados.nome,
+                email: dados.email,
+                telefone: dados.telefone
+            })
+            .eq('id', usuarioId);
+        
+        if (usuarioError) throw usuarioError;
+        
+        // Atualizar cliente
+        const { error: clienteError } = await supabase
+            .from('appgi_mentoria_clientes')
+            .update({
+                empresa: dados.empresa,
+                nicho_atuacao: dados.nicho
+            })
+            .eq('id', clienteId);
+        
+        if (clienteError) throw clienteError;
+        
+        alert('Cliente atualizado com sucesso!');
+        
+        // Fechar modal
+        bootstrap.Modal.getInstance(document.getElementById('modalEditarCliente')).hide();
+        
+        // Recarregar lista
+        carregarClientes();
+        
+    } catch (error) {
+        console.error('Erro ao atualizar:', error);
+        alert(`Erro ao atualizar cliente: ${error.message}`);
+    } finally {
+        btnSalvar.disabled = false;
+        btnSalvar.innerHTML = 'Salvar';
+    }
+});
+
+
+// ========== CRUD: EXCLUIR CLIENTE ==========
+
+function excluirCliente(clienteId) {
+    if (!confirm('Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita e irá remover:\n\n- Dados do cliente\n- Processo de mentoria\n- Todas as tarefas\n\nDeseja continuar?')) {
+        return;
+    }
+    
+    excluirClienteConfirmado(clienteId);
+}
+
+async function excluirClienteConfirmado(clienteId) {
+    try {
+        // 1. Deletar tarefas
+        const { error: tarefasError } = await supabase
+            .from('appgi_mentoria_tarefas')
+            .delete()
+            .eq('cliente_id', clienteId);
+        
+        if (tarefasError) throw tarefasError;
+        
+        // 2. Deletar processos
+        const { error: processoError } = await supabase
+            .from('appgi_mentoria_processos')
+            .delete()
+            .eq('cliente_id', clienteId);
+        
+        if (processoError) throw processoError;
+        
+        // 3. Buscar usuario_id do cliente
+        const { data: cliente, error: clienteError } = await supabase
+            .from('appgi_mentoria_clientes')
+            .select('usuario_id')
+            .eq('id', clienteId)
+            .single();
+        
+        if (clienteError) throw clienteError;
+        
+        // 4. Deletar cliente
+        const { error: deleteClienteError } = await supabase
+            .from('appgi_mentoria_clientes')
+            .delete()
+            .eq('id', clienteId);
+        
+        if (deleteClienteError) throw deleteClienteError;
+        
+        // 5. Deletar usuário
+        const { error: usuarioError } = await supabase
+            .from('appgi_mentoria_usuarios')
+            .delete()
+            .eq('id', cliente.usuario_id);
+        
+        if (usuarioError) throw usuarioError;
+        
+        alert('Cliente excluído com sucesso!');
+        
+        // Fechar modal
+        const modalDetalhes = bootstrap.Modal.getInstance(document.getElementById('modalDetalhesCliente'));
+        if (modalDetalhes) modalDetalhes.hide();
+        
+        // Recarregar lista
+        carregarClientes();
+        
+    } catch (error) {
+        console.error('Erro ao excluir:', error);
+        alert(`Erro ao excluir cliente: ${error.message}`);
+    }
+}
+
+
+// ========== CRUD: ADICIONAR TAREFA ==========
+
+let processoAtual = null;
+
+function abrirAdicionarTarefa(clienteId, processoId) {
+    document.getElementById('novaTarefaClienteId').value = clienteId;
+    document.getElementById('novaTarefaProcessoId').value = processoId;
+    
+    // Limpar form
+    document.getElementById('formAdicionarTarefa').reset();
+    
+    // Sugerir datas (próxima semana)
+    const hoje = new Date();
+    const proximaSegunda = new Date(hoje);
+    proximaSegunda.setDate(hoje.getDate() + (7 - hoje.getDay() + 1));
+    
+    const proximoDomingo = new Date(proximaSegunda);
+    proximoDomingo.setDate(proximaSegunda.getDate() + 6);
+    
+    document.getElementById('novaTarefaDataInicio').value = proximaSegunda.toISOString().split('T')[0];
+    document.getElementById('novaTarefaDataPrazo').value = proximoDomingo.toISOString().split('T')[0];
+    
+    // Fechar modal de detalhes
+    bootstrap.Modal.getInstance(document.getElementById('modalDetalhesCliente')).hide();
+    
+    // Abrir modal de nova tarefa
+    new bootstrap.Modal(document.getElementById('modalAdicionarTarefa')).show();
+}
+
+// Salvar nova tarefa
+document.getElementById('btnSalvarNovaTarefa')?.addEventListener('click', async () => {
+    const form = document.getElementById('formAdicionarTarefa');
+    
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const clienteId = document.getElementById('novaTarefaClienteId').value;
+    const processoId = document.getElementById('novaTarefaProcessoId').value;
+    
+    const dados = {
+        titulo: document.getElementById('novaTarefaTitulo').value.trim(),
+        descricao: document.getElementById('novaTarefaDescricao').value.trim(),
+        data_inicio: document.getElementById('novaTarefaDataInicio').value,
+        data_prazo: document.getElementById('novaTarefaDataPrazo').value
+    };
+    
+    const btnSalvar = document.getElementById('btnSalvarNovaTarefa');
+    btnSalvar.disabled = true;
+    btnSalvar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Salvando...';
+    
+    try {
+        // Buscar última semana cadastrada
+        const { data: tarefas, error: tarefasError } = await supabase
+            .from('appgi_mentoria_tarefas')
+            .select('semana')
+            .eq('cliente_id', clienteId)
+            .order('semana', { ascending: false })
+            .limit(1);
+        
+        if (tarefasError) throw tarefasError;
+        
+        const proximaSemana = tarefas && tarefas.length > 0 ? tarefas[0].semana + 1 : 1;
+        
+        // Inserir nova tarefa
+        const { error: insertError } = await supabase
+            .from('appgi_mentoria_tarefas')
+            .insert({
+                processo_id: processoId,
+                mentor_id: usuarioLogado.id,
+                cliente_id: clienteId,
+                semana: proximaSemana,
+                titulo: dados.titulo,
+                descricao: dados.descricao,
+                data_inicio: dados.data_inicio,
+                data_prazo: dados.data_prazo,
+                status: 'a_iniciar'
+            });
+        
+        if (insertError) throw insertError;
+        
+        alert('Tarefa adicionada com sucesso!');
+        
+        // Fechar modal
+        bootstrap.Modal.getInstance(document.getElementById('modalAdicionarTarefa')).hide();
+        
+        // Reabrir detalhes do cliente
+        verDetalhesCliente(clienteId);
+        
+    } catch (error) {
+        console.error('Erro ao adicionar tarefa:', error);
+        alert(`Erro ao adicionar tarefa: ${error.message}`);
+    } finally {
+        btnSalvar.disabled = false;
+        btnSalvar.innerHTML = 'Adicionar';
+    }
+});
