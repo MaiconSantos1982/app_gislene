@@ -20,13 +20,21 @@ async function verificarSessao() {
     }
 }
 
-// Login Mentor
+// Login Mentor - PERMITIR ACESSO SEM CREDENCIAIS
 document.getElementById('formLoginMentor')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const email = document.getElementById('emailMentor').value;
-    const senha = document.getElementById('senhaMentor').value;
+    const email = document.getElementById('emailMentor').value.trim();
+    const senha = document.getElementById('senhaMentor').value.trim();
     
+    // Se email e senha estiverem vazios, permitir acesso direto
+    if (email === '' && senha === '') {
+        localStorage.setItem('mentor_acesso_direto', 'true');
+        window.location.href = 'mentor-dashboard.html';
+        return;
+    }
+    
+    // Se preencheu credenciais, tentar login normal
     try {
         const { data, error } = await supabase.auth.signInWithPassword({
             email: email,
@@ -43,6 +51,7 @@ document.getElementById('formLoginMentor')?.addEventListener('submit', async (e)
             .single();
         
         if (usuario.tipo === 'mentor') {
+            localStorage.removeItem('mentor_acesso_direto');
             window.location.href = 'mentor-dashboard.html';
         } else {
             mostrarAlerta('Acesso negado. Use o login de cliente.', 'danger');
