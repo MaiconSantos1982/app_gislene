@@ -1,11 +1,10 @@
-// ID FIXO DO MENTOR (cole aqui o UUID do mentor)
-const MENTOR_ID_FIXO = '85de5f16-1f9e-4d0d-82c0-a2e639baae86'; // ← COLE O MESMO ID AQUI
+// ID FIXO DO MENTOR
+const MENTOR_ID_FIXO = '85de5f16-1f9e-4d0d-82c0-a2e639baae86'; // SEU ID
 
 let usuarioLogado = null;
 let clienteAtual = null;
 
-let usuarioLogado = null;
-let clienteAtual = null;
+console.log('mentor-clientes.js carregado');
 
 // Verificar autenticação
 async function verificarAutenticacao() {
@@ -22,6 +21,7 @@ async function verificarAutenticacao() {
         
         if (mentor) {
             usuarioLogado = mentor;
+            console.log('Mentor carregado:', usuarioLogado);
             carregarClientes();
         } else {
             alert('Mentor não encontrado. Verifique o ID fixo no código.');
@@ -132,12 +132,29 @@ async function carregarClientes() {
     }
 }
 
-// Salvar novo cliente
-document.getElementById('btnSalvarCliente')?.addEventListener('click', async () => {
+// Salvar novo cliente - EVENT LISTENER
+document.addEventListener('DOMContentLoaded', () => {
+    const btnSalvar = document.getElementById('btnSalvarCliente');
+    console.log('Botão encontrado:', btnSalvar);
+    
+    if (btnSalvar) {
+        btnSalvar.addEventListener('click', salvarNovoCliente);
+    }
+});
+
+// Função para salvar novo cliente
+async function salvarNovoCliente() {
+    console.log('Função salvarNovoCliente chamada');
+    
     const form = document.getElementById('formNovoCliente');
     
     if (!form.checkValidity()) {
         form.reportValidity();
+        return;
+    }
+    
+    if (!usuarioLogado || !usuarioLogado.id) {
+        alert('Erro: Mentor não identificado. Recarregue a página.');
         return;
     }
     
@@ -154,12 +171,15 @@ document.getElementById('btnSalvarCliente')?.addEventListener('click', async () 
         dataInicio: document.getElementById('dataInicio').value
     };
     
+    console.log('Dados do cliente:', dados);
+    
     const btnSalvar = document.getElementById('btnSalvarCliente');
     btnSalvar.disabled = true;
     btnSalvar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Salvando...';
     
     try {
-        // 1. Criar usuário na tabela appgi_mentoria_usuarios
+        // 1. Criar usuário
+        console.log('Criando usuário...');
         const { data: usuario, error: usuarioError } = await supabase
             .from('appgi_mentoria_usuarios')
             .insert({
@@ -173,8 +193,10 @@ document.getElementById('btnSalvarCliente')?.addEventListener('click', async () 
             .single();
         
         if (usuarioError) throw usuarioError;
+        console.log('Usuário criado:', usuario);
         
-        // 2. Criar registro de cliente
+        // 2. Criar cliente
+        console.log('Criando cliente...');
         const { data: cliente, error: clienteError } = await supabase
             .from('appgi_mentoria_clientes')
             .insert({
@@ -187,8 +209,10 @@ document.getElementById('btnSalvarCliente')?.addEventListener('click', async () 
             .single();
         
         if (clienteError) throw clienteError;
+        console.log('Cliente criado:', cliente);
         
-        // 3. Criar processo de mentoria
+        // 3. Criar processo
+        console.log('Criando processo...');
         const { data: processo, error: processoError } = await supabase
             .from('appgi_mentoria_processos')
             .insert({
@@ -205,8 +229,10 @@ document.getElementById('btnSalvarCliente')?.addEventListener('click', async () 
             .single();
         
         if (processoError) throw processoError;
+        console.log('Processo criado:', processo);
         
-        // 4. Criar tarefas vazias para cada semana
+        // 4. Criar tarefas
+        console.log('Criando tarefas...');
         const tarefas = [];
         const dataInicio = new Date(dados.dataInicio);
         
@@ -235,20 +261,17 @@ document.getElementById('btnSalvarCliente')?.addEventListener('click', async () 
             .insert(tarefas);
         
         if (tarefasError) throw tarefasError;
-        
-        // 5. Enviar Magic Link para o cliente
-        // await supabase.auth.signInWithOtp({
-        //    email: dados.email,
-        //    options: {
-        //        emailRedirectTo: `${window.location.origin}/cliente-dashboard.html`
-        //    }
-        //});
+        console.log('Tarefas criadas!');
         
         // Sucesso
-        alert('Cliente cadastrado com sucesso! Um e-mail de acesso foi enviado.');
+        alert('Cliente cadastrado com sucesso! O cliente pode criar sua senha no primeiro acesso.');
         
-        // Fechar modal e limpar formulário
-        bootstrap.Modal.getInstance(document.getElementById('modalNovoCliente')).hide();
+        // Fechar modal
+        const modalElement = document.getElementById('modalNovoCliente');
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        if (modalInstance) {
+            modalInstance.hide();
+        }
         form.reset();
         
         // Recarregar lista
@@ -261,12 +284,11 @@ document.getElementById('btnSalvarCliente')?.addEventListener('click', async () 
         btnSalvar.disabled = false;
         btnSalvar.innerHTML = 'Salvar e Criar Tarefas';
     }
-});
+}
 
 // Ver detalhes do cliente
 async function verDetalhesCliente(clienteId) {
     try {
-        // Buscar dados completos do cliente
         const { data: cliente, error } = await supabase
             .from('appgi_mentoria_clientes')
             .select(`
@@ -293,7 +315,6 @@ async function verDetalhesCliente(clienteId) {
         
         if (error) throw error;
         
-        // Buscar tarefas
         const { data: tarefas, error: tarefasError } = await supabase
             .from('appgi_mentoria_tarefas')
             .select('*')
@@ -302,11 +323,8 @@ async function verDetalhesCliente(clienteId) {
         
         if (tarefasError) throw tarefasError;
         
-        // Montar conteúdo do modal
         const conteudo = `
             <div class="row">
-                
-                <!-- Informações do Cliente -->
                 <div class="col-md-6 mb-4">
                     <div class="card border-0 bg-light h-100">
                         <div class="card-body">
@@ -319,8 +337,6 @@ async function verDetalhesCliente(clienteId) {
                         </div>
                     </div>
                 </div>
-
-                <!-- Informações do Processo -->
                 <div class="col-md-6 mb-4">
                     <div class="card border-0 bg-light h-100">
                         <div class="card-body">
@@ -333,8 +349,6 @@ async function verDetalhesCliente(clienteId) {
                         </div>
                     </div>
                 </div>
-
-                <!-- Tarefas -->
                 <div class="col-12">
                     <h6 class="fw-bold mb-3">Tarefas</h6>
                     <div class="accordion" id="accordionTarefas">
@@ -399,13 +413,10 @@ async function verDetalhesCliente(clienteId) {
                         `).join('')}
                     </div>
                 </div>
-
             </div>
         `;
         
         document.getElementById('conteudoDetalhesCliente').innerHTML = conteudo;
-        
-        // Abrir modal
         new bootstrap.Modal(document.getElementById('modalDetalhesCliente')).show();
         
     } catch (error) {
@@ -414,7 +425,7 @@ async function verDetalhesCliente(clienteId) {
     }
 }
 
-// Salvar tarefa editada
+// Salvar tarefa
 async function salvarTarefa(event, tarefaId) {
     event.preventDefault();
     
@@ -434,7 +445,6 @@ async function salvarTarefa(event, tarefaId) {
             .eq('id', tarefaId);
         
         if (error) throw error;
-        
         alert('Tarefa atualizada com sucesso!');
         
     } catch (error) {
@@ -443,7 +453,7 @@ async function salvarTarefa(event, tarefaId) {
     }
 }
 
-// Helper: Badge de status
+// Helpers
 function getBadgeStatus(status, dataPrazo) {
     const hoje = new Date().toISOString().split('T')[0];
     
@@ -458,7 +468,6 @@ function getBadgeStatus(status, dataPrazo) {
     }
 }
 
-// Formatar data
 function formatarData(dataString) {
     const data = new Date(dataString);
     return data.toLocaleDateString('pt-BR', {
@@ -471,7 +480,7 @@ function formatarData(dataString) {
 // Logout
 document.getElementById('btnLogout')?.addEventListener('click', async (e) => {
     e.preventDefault();
-    localStorage.removeItem('mentor_acesso_direto'); // ADICIONAR ESTA LINHA
+    localStorage.removeItem('mentor_acesso_direto');
     await supabase.auth.signOut();
     window.location.href = 'index.html';
 });
