@@ -175,7 +175,7 @@ async function salvarNovoCliente() {
     const dados = {
         nome: document.getElementById('nomeCliente').value.trim(),
         email: document.getElementById('emailCliente').value.trim(),
-        telefone: removerMascaraTelefone(document.getElementById('telefoneCliente').value.trim())
+        telefone: removerMascaraTelefone(document.getElementById('telefoneCliente').value.trim()),
         empresa: document.getElementById('empresaCliente').value.trim(),
         nicho: document.getElementById('nichoCliente').value.trim(),
         porqueProcesso: document.getElementById('porqueProcesso').value.trim(),
