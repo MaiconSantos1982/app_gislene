@@ -57,28 +57,36 @@ async function verificarAutenticacao() {
 // Carregar lista de clientes
 async function carregarClientes() {
     try {
-        const { data: clientes, error } = await supabase
+        // Buscar clientes
+        const { data: clientes, error: clientesError } = await supabase
             .from('appgi_mentoria_clientes')
-            .select(`
-                id,
-                nicho_atuacao,
-                empresa,
-                created_at,
-                usuario:usuario_id (
-                    id,
-                    nome,
-                    email,
-                    telefone,
-                    ativo
-                ),
-                processo:appgi_mentoria_processos (
-                    status
-                )
-            `)
+            .select('id, nicho_atuacao, empresa, created_at, usuario_id')
             .eq('mentor_id', usuarioLogado.id)
             .order('created_at', { ascending: false });
         
-        if (error) throw error;
+        if (clientesError) throw clientesError;
+        
+        // Buscar usuários
+        const usuarioIds = clientes.map(c => c.usuario_id);
+        const { data: usuarios, error: usuariosError } = await supabase
+            .from('appgi_mentoria_usuarios')
+            .select('id, nome, email, telefone, ativo')
+            .in('id', usuarioIds);
+        
+        if (usuariosError) throw usuariosError;
+        
+        // Buscar processos
+        const clienteIds = clientes.map(c => c.id);
+        const { data: processos, error: processosError } = await supabase
+            .from('appgi_mentoria_processos')
+            .select('cliente_id, status')
+            .in('cliente_id', clienteIds);
+        
+        if (processosError) throw processosError;
+        
+        console.log('Clientes:', clientes);
+        console.log('Usuários:', usuarios);
+        console.log('Processos:', processos);
         
         const tbody = document.getElementById('tabelaClientes');
         
@@ -95,7 +103,13 @@ async function carregarClientes() {
         }
         
         tbody.innerHTML = clientes.map(cliente => {
-            const statusProcesso = cliente.processo?.[0]?.status || 'sem_processo';
+            // Encontrar usuário
+            const usuario = usuarios.find(u => u.id === cliente.usuario_id);
+            
+            // Encontrar processo
+            const processo = processos?.find(p => p.cliente_id === cliente.id);
+            const statusProcesso = processo?.status || 'sem_processo';
+            
             const statusBadge = {
                 'ativo': '<span class="badge bg-success">Ativo</span>',
                 'concluido': '<span class="badge bg-secondary">Concluído</span>',
@@ -105,9 +119,9 @@ async function carregarClientes() {
             
             return `
                 <tr>
-                    <td>${cliente.usuario.nome}</td>
-                    <td>${cliente.usuario.email}</td>
-                    <td>${cliente.usuario.telefone || '-'}</td>
+                    <td>${usuario?.nome || '-'}</td>
+                    <td>${usuario?.email || '-'}</td>
+                    <td>${usuario?.telefone || '-'}</td>
                     <td>${cliente.empresa || '-'}</td>
                     <td>${cliente.nicho_atuacao || '-'}</td>
                     <td>${statusBadge[statusProcesso]}</td>
