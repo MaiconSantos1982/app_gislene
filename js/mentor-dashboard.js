@@ -198,7 +198,7 @@ document.getElementById('btnLogout')?.addEventListener('click', async (e) => {
     e.preventDefault();
     localStorage.removeItem('mentor_acesso_direto');
     await supabase.auth.signOut();
-    window.location.href = 'index.html';
+    window.location.href = 'mentor.html';
 });
 
 // Inicializar ao carregar página
