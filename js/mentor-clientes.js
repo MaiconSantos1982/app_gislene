@@ -824,21 +824,50 @@ document.getElementById('btnSalvarNovaTarefa')?.addEventListener('click', async 
         btnSalvar.innerHTML = 'Adicionar';
     }
 });
+
 // ========== MÁSCARA DE TELEFONE ==========
 
 function aplicarMascaraTelefone(event) {
     let valor = event.target.value.replace(/\D/g, ''); // Remove tudo que não é número
     
     if (valor.length <= 11) {
-        // Formato: (00) 00000.00.00 ou (00) 0000.00.00
-        valor = valor.replace(/^(\d{2})(\d)/g, '($1) $2');
-        valor = valor.replace(/(\d)(\d{4})$/, '$1.$2');
-        if (valor.length >= 14) {
-            valor = valor.replace(/(\d{5})\./, '$1.');
+        // (00) 00000.00.00 para celular ou (00) 0000.00.00 para fixo
+        if (valor.length > 10) {
+            // Celular com 11 dígitos
+            valor = valor.replace(/^(\d{2})(\d{5})(\d{2})(\d{2})$/, '($1) $2.$3.$4');
+        } else if (valor.length > 6) {
+            // Intermediário
+            valor = valor.replace(/^(\d{2})(\d{4,5})(\d{0,2})(\d{0,2})/, '($1) $2.$3.$4');
+            valor = valor.replace(/\.\.$/, '.'); // Remove ponto duplo
+        } else if (valor.length > 2) {
+            // Apenas DDD
+            valor = valor.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
         }
     }
     
-    event.target.value = valor;
+    event.target.value = valor.trim().replace(/\.$/, ''); // Remove ponto final
+}
+
+// Remover formatação antes de salvar
+function removerMascaraTelefone(telefone) {
+    return telefone.replace(/\D/g, ''); // Remove tudo que não é número
+}
+
+// Formatar telefone para exibição
+function formatarTelefone(telefone) {
+    if (!telefone) return '';
+    
+    telefone = telefone.replace(/\D/g, '');
+    
+    if (telefone.length === 11) {
+        // Celular: (00) 00000.00.00
+        return telefone.replace(/^(\d{2})(\d{5})(\d{2})(\d{2})$/, '($1) $2.$3.$4');
+    } else if (telefone.length === 10) {
+        // Fixo: (00) 0000.00.00
+        return telefone.replace(/^(\d{2})(\d{4})(\d{2})(\d{2})$/, '($1) $2.$3.$4');
+    }
+    
+    return telefone;
 }
 
 // Aplicar máscara nos campos de telefone
@@ -853,53 +882,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Também aplicar quando o modal de edição for aberto
-function abrirEditarCliente(clienteId) {
-    console.log('abrirEditarCliente chamado:', clienteId);
-    const cliente = clienteAtual;
-    
-    if (!cliente) {
-        console.error('clienteAtual é null');
-        return;
-    }
-    
-    clienteEditando = cliente;
-    
-    // Preencher formulário
-    document.getElementById('editClienteId').value = clienteId;
-    document.getElementById('editUsuarioId').value = cliente.usuario.id || '';
-    document.getElementById('editNome').value = cliente.usuario.nome;
-    document.getElementById('editEmail').value = cliente.usuario.email;
-    
-    // Formatar telefone antes de preencher
-    let telefone = cliente.usuario.telefone || '';
-    if (telefone) {
-        telefone = telefone.replace(/\D/g, '');
-        if (telefone.length === 11) {
-            telefone = telefone.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2.$3');
-        } else if (telefone.length === 10) {
-            telefone = telefone.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2.$3');
-        }
-    }
-    
-    document.getElementById('editTelefone').value = telefone;
-    document.getElementById('editEmpresa').value = cliente.empresa || '';
-    document.getElementById('editNicho').value = cliente.nicho_atuacao || '';
-    
-    // Fechar modal de detalhes
-    bootstrap.Modal.getInstance(document.getElementById('modalDetalhesCliente')).hide();
-    
-    // Abrir modal de edição
-    new bootstrap.Modal(document.getElementById('modalEditarCliente')).show();
-    
-    // Aplicar máscara após abrir modal
-    setTimeout(() => {
-        const campoEdit = document.getElementById('editTelefone');
-        if (campoEdit) {
-            campoEdit.addEventListener('input', aplicarMascaraTelefone);
-        }
-    }, 100);
-}
 
 // Remover formatação antes de salvar
 function removerMascaraTelefone(telefone) {
