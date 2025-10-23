@@ -606,7 +606,7 @@ document.getElementById('btnSalvarEdicao')?.addEventListener('click', async () =
     const dados = {
         nome: document.getElementById('editNome').value.trim(),
         email: document.getElementById('editEmail').value.trim(),
-        telefone: removerMascaraTelefone(document.getElementById('editTelefone').value.trim())
+        telefone: removerMascaraTelefone(document.getElementById('editTelefone').value.trim()),
         empresa: document.getElementById('editEmpresa').value.trim(),
         nicho: document.getElementById('editNicho').value.trim()
     };
