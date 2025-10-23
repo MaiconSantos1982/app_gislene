@@ -289,7 +289,8 @@ async function salvarNovoCliente() {
 // Ver detalhes do cliente
 async function verDetalhesCliente(clienteId) {
     try {
-        const { data: cliente, error } = await supabase
+        // Buscar cliente
+        const { data: cliente, error: clienteError } = await supabase
             .from('appgi_mentoria_clientes')
             .select(`
                 id,
@@ -299,32 +300,34 @@ async function verDetalhesCliente(clienteId) {
                     nome,
                     email,
                     telefone
-                ),
-                processo:appgi_mentoria_processos (
-                    id,
-                    porque_processo,
-                    objetivos,
-                    observacoes_gerais,
-                    duracao_semanas,
-                    data_inicio,
-                    status
                 )
             `)
             .eq('id', clienteId)
             .single();
         
-        if (error) throw error;
+        if (clienteError) throw clienteError;
         
-        console.log('Cliente completo:', cliente); // DEBUG
+        console.log('Cliente:', cliente);
+        
+        // Buscar processo separadamente
+        const { data: processos, error: processoError } = await supabase
+            .from('appgi_mentoria_processos')
+            .select('*')
+            .eq('cliente_id', clienteId);
+        
+        if (processoError) throw processoError;
+        
+        console.log('Processos:', processos);
         
         // Verificar se o processo existe
-        if (!cliente.processo || cliente.processo.length === 0) {
+        if (!processos || processos.length === 0) {
             alert('Este cliente ainda não possui um processo de mentoria cadastrado.');
             return;
         }
         
-        const processo = cliente.processo[0];
+        const processo = processos[0];
         
+        // Buscar tarefas
         const { data: tarefas, error: tarefasError } = await supabase
             .from('appgi_mentoria_tarefas')
             .select('*')
@@ -333,7 +336,7 @@ async function verDetalhesCliente(clienteId) {
         
         if (tarefasError) throw tarefasError;
         
-        console.log('Tarefas:', tarefas); // DEBUG
+        console.log('Tarefas:', tarefas);
         
         const conteudo = `
             <div class="row">
@@ -356,8 +359,8 @@ async function verDetalhesCliente(clienteId) {
                             <p class="mb-2"><strong>Duração:</strong> ${processo.duracao_semanas} semanas</p>
                             <p class="mb-2"><strong>Início:</strong> ${formatarData(processo.data_inicio)}</p>
                             <p class="mb-2"><strong>Status:</strong> ${processo.status}</p>
-                            <p class="mb-2"><strong>Por quê:</strong> ${processo.porque_processo}</p>
-                            <p class="mb-0"><strong>Objetivos:</strong> ${processo.objetivos}</p>
+                            <p class="mb-2"><strong>Por quê:</strong> ${processo.porque_processo || '-'}</p>
+                            <p class="mb-0"><strong>Objetivos:</strong> ${processo.objetivos || '-'}</p>
                         </div>
                     </div>
                 </div>
