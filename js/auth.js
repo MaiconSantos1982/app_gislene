@@ -63,26 +63,119 @@ document.getElementById('formLoginMentor')?.addEventListener('submit', async (e)
     }
 });
 
-// Magic Link Cliente
+// Toggle entre Login e Criar Conta Cliente
+document.getElementById('linkCriarConta')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('areaLoginCliente').style.display = 'none';
+    document.getElementById('areaCriarConta').style.display = 'block';
+});
+
+document.getElementById('linkVoltarLogin')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('areaLoginCliente').style.display = 'block';
+    document.getElementById('areaCriarConta').style.display = 'none';
+});
+
+// Login Cliente
 document.getElementById('formLoginCliente')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const email = document.getElementById('emailCliente').value;
+    const email = document.getElementById('emailClienteLogin').value.trim();
+    const senha = document.getElementById('senhaClienteLogin').value.trim();
     
     try {
-        const { error } = await supabase.auth.signInWithOtp({
+        const { data, error } = await supabase.auth.signInWithPassword({
             email: email,
-            options: {
-                emailRedirectTo: `${window.location.origin}/cliente-dashboard.html`
-            }
+            password: senha
         });
         
         if (error) throw error;
         
-        mostrarAlerta('Link de acesso enviado para seu e-mail!', 'success');
-        document.getElementById('formLoginCliente').reset();
+        // Verificar se é cliente
+        const { data: usuario } = await supabase
+            .from('appgi_mentoria_usuarios')
+            .select('tipo')
+            .eq('auth_id', data.user.id)
+            .single();
+        
+        if (usuario && usuario.tipo === 'cliente') {
+            window.location.href = 'cliente-dashboard.html';
+        } else {
+            mostrarAlerta('Usuário não encontrado como cliente.', 'danger');
+            await supabase.auth.signOut();
+        }
         
     } catch (error) {
+        mostrarAlerta('Email ou senha incorretos', 'danger');
+    }
+});
+
+// Criar Conta Cliente
+document.getElementById('formCriarConta')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = document.getElementById('emailClienteCadastro').value.trim();
+    const senha = document.getElementById('senhaClienteCadastro').value.trim();
+    const confirmarSenha = document.getElementById('confirmarSenha').value.trim();
+    
+    // Validar senhas
+    if (senha !== confirmarSenha) {
+        mostrarAlerta('As senhas não coincidem', 'danger');
+        return;
+    }
+    
+    try {
+        // 1. Verificar se o email existe na tabela de usuários (cadastrado pelo mentor)
+        const { data: usuarioExistente, error: erroVerificar } = await supabase
+            .from('appgi_mentoria_usuarios')
+            .select('id, auth_id, tipo')
+            .eq('email', email)
+            .eq('tipo', 'cliente')
+            .single();
+        
+        if (erroVerificar || !usuarioExistente) {
+            mostrarAlerta('Email não encontrado. Verifique com seu mentor.', 'danger');
+            return;
+        }
+        
+        // 2. Verificar se já tem auth_id (já criou conta)
+        if (usuarioExistente.auth_id) {
+            mostrarAlerta('Conta já existe. Use o login normal.', 'warning');
+            document.getElementById('linkVoltarLogin').click();
+            return;
+        }
+        
+        // 3. Criar usuário no Supabase Auth
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+            email: email,
+            password: senha,
+            options: {
+                emailRedirectTo: `${window.location.origin}/cliente-dashboard.html`,
+                data: {
+                    tipo: 'cliente'
+                }
+            }
+        });
+        
+        if (authError) throw authError;
+        
+        // 4. Atualizar registro com auth_id
+        const { error: updateError } = await supabase
+            .from('appgi_mentoria_usuarios')
+            .update({ auth_id: authData.user.id })
+            .eq('id', usuarioExistente.id);
+        
+        if (updateError) throw updateError;
+        
+        mostrarAlerta('Conta criada com sucesso! Fazendo login...', 'success');
+        
+        // 5. Redirecionar para dashboard
+        setTimeout(() => {
+            window.location.href = 'cliente-dashboard.html';
+        }, 1500);
+        
+    } catch (error) {
+        console.error('Erro ao criar conta:', error);
         mostrarAlerta(error.message, 'danger');
     }
 });
