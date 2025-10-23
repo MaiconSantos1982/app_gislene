@@ -315,6 +315,16 @@ async function verDetalhesCliente(clienteId) {
         
         if (error) throw error;
         
+        console.log('Cliente completo:', cliente); // DEBUG
+        
+        // Verificar se o processo existe
+        if (!cliente.processo || cliente.processo.length === 0) {
+            alert('Este cliente ainda não possui um processo de mentoria cadastrado.');
+            return;
+        }
+        
+        const processo = cliente.processo[0];
+        
         const { data: tarefas, error: tarefasError } = await supabase
             .from('appgi_mentoria_tarefas')
             .select('*')
@@ -323,15 +333,17 @@ async function verDetalhesCliente(clienteId) {
         
         if (tarefasError) throw tarefasError;
         
+        console.log('Tarefas:', tarefas); // DEBUG
+        
         const conteudo = `
             <div class="row">
                 <div class="col-md-6 mb-4">
                     <div class="card border-0 bg-light h-100">
                         <div class="card-body">
                             <h6 class="fw-bold mb-3">Dados do Cliente</h6>
-                            <p class="mb-2"><strong>Nome:</strong> ${cliente.usuario.nome}</p>
-                            <p class="mb-2"><strong>E-mail:</strong> ${cliente.usuario.email}</p>
-                            <p class="mb-2"><strong>Telefone:</strong> ${cliente.usuario.telefone || '-'}</p>
+                            <p class="mb-2"><strong>Nome:</strong> ${cliente.usuario?.nome || '-'}</p>
+                            <p class="mb-2"><strong>E-mail:</strong> ${cliente.usuario?.email || '-'}</p>
+                            <p class="mb-2"><strong>Telefone:</strong> ${cliente.usuario?.telefone || '-'}</p>
                             <p class="mb-2"><strong>Empresa:</strong> ${cliente.empresa || '-'}</p>
                             <p class="mb-0"><strong>Nicho:</strong> ${cliente.nicho_atuacao || '-'}</p>
                         </div>
@@ -341,77 +353,83 @@ async function verDetalhesCliente(clienteId) {
                     <div class="card border-0 bg-light h-100">
                         <div class="card-body">
                             <h6 class="fw-bold mb-3">Processo de Mentoria</h6>
-                            <p class="mb-2"><strong>Duração:</strong> ${cliente.processo[0].duracao_semanas} semanas</p>
-                            <p class="mb-2"><strong>Início:</strong> ${formatarData(cliente.processo[0].data_inicio)}</p>
-                            <p class="mb-2"><strong>Status:</strong> ${cliente.processo[0].status}</p>
-                            <p class="mb-2"><strong>Por quê:</strong> ${cliente.processo[0].porque_processo}</p>
-                            <p class="mb-0"><strong>Objetivos:</strong> ${cliente.processo[0].objetivos}</p>
+                            <p class="mb-2"><strong>Duração:</strong> ${processo.duracao_semanas} semanas</p>
+                            <p class="mb-2"><strong>Início:</strong> ${formatarData(processo.data_inicio)}</p>
+                            <p class="mb-2"><strong>Status:</strong> ${processo.status}</p>
+                            <p class="mb-2"><strong>Por quê:</strong> ${processo.porque_processo}</p>
+                            <p class="mb-0"><strong>Objetivos:</strong> ${processo.objetivos}</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-12">
                     <h6 class="fw-bold mb-3">Tarefas</h6>
-                    <div class="accordion" id="accordionTarefas">
-                        ${tarefas.map((tarefa, index) => `
-                            <div class="accordion-item">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button ${index === 0 ? '' : 'collapsed'}" type="button" 
-                                        data-bs-toggle="collapse" data-bs-target="#tarefa${tarefa.id}">
-                                        Semana ${tarefa.semana} - ${tarefa.titulo}
-                                        <span class="ms-2">${getBadgeStatus(tarefa.status, tarefa.data_prazo)}</span>
-                                    </button>
-                                </h2>
-                                <div id="tarefa${tarefa.id}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}" 
-                                    data-bs-parent="#accordionTarefas">
-                                    <div class="accordion-body">
-                                        <form onsubmit="salvarTarefa(event, '${tarefa.id}')">
-                                            <div class="mb-3">
-                                                <label class="form-label">Título da Tarefa</label>
-                                                <input type="text" class="form-control" value="${tarefa.titulo}" 
-                                                    id="titulo_${tarefa.id}" required>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Descrição</label>
-                                                <textarea class="form-control" rows="3" 
-                                                    id="descricao_${tarefa.id}">${tarefa.descricao || ''}</textarea>
-                                            </div>
-                                            <div class="row mb-3">
-                                                <div class="col-md-6">
-                                                    <label class="form-label">Data Início</label>
-                                                    <input type="date" class="form-control" value="${tarefa.data_inicio}" 
-                                                        id="data_inicio_${tarefa.id}" required>
+                    ${tarefas && tarefas.length > 0 ? `
+                        <div class="accordion" id="accordionTarefas">
+                            ${tarefas.map((tarefa, index) => `
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button ${index === 0 ? '' : 'collapsed'}" type="button" 
+                                            data-bs-toggle="collapse" data-bs-target="#tarefa${tarefa.id}">
+                                            Semana ${tarefa.semana} - ${tarefa.titulo}
+                                            <span class="ms-2">${getBadgeStatus(tarefa.status, tarefa.data_prazo)}</span>
+                                        </button>
+                                    </h2>
+                                    <div id="tarefa${tarefa.id}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}" 
+                                        data-bs-parent="#accordionTarefas">
+                                        <div class="accordion-body">
+                                            <form onsubmit="salvarTarefa(event, '${tarefa.id}')">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Título da Tarefa</label>
+                                                    <input type="text" class="form-control" value="${tarefa.titulo}" 
+                                                        id="titulo_${tarefa.id}" required>
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <label class="form-label">Data Prazo</label>
-                                                    <input type="date" class="form-control" value="${tarefa.data_prazo}" 
-                                                        id="data_prazo_${tarefa.id}" required>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Descrição</label>
+                                                    <textarea class="form-control" rows="3" 
+                                                        id="descricao_${tarefa.id}">${tarefa.descricao || ''}</textarea>
                                                 </div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Observações do Mentor</label>
-                                                <textarea class="form-control" rows="2" 
-                                                    id="obs_mentor_${tarefa.id}">${tarefa.observacoes_mentor || ''}</textarea>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Observações do Cliente</label>
-                                                <textarea class="form-control" rows="2" readonly 
-                                                    id="obs_cliente_${tarefa.id}">${tarefa.observacoes_cliente || '-'}</textarea>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Status</label>
-                                                <select class="form-select" id="status_${tarefa.id}">
-                                                    <option value="a_iniciar" ${tarefa.status === 'a_iniciar' ? 'selected' : ''}>A Iniciar</option>
-                                                    <option value="em_andamento" ${tarefa.status === 'em_andamento' ? 'selected' : ''}>Em Andamento</option>
-                                                    <option value="concluido" ${tarefa.status === 'concluido' ? 'selected' : ''}>Concluído</option>
-                                                </select>
-                                            </div>
-                                            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
-                                        </form>
+                                                <div class="row mb-3">
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Data Início</label>
+                                                        <input type="date" class="form-control" value="${tarefa.data_inicio}" 
+                                                            id="data_inicio_${tarefa.id}" required>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Data Prazo</label>
+                                                        <input type="date" class="form-control" value="${tarefa.data_prazo}" 
+                                                            id="data_prazo_${tarefa.id}" required>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Observações do Mentor</label>
+                                                    <textarea class="form-control" rows="2" 
+                                                        id="obs_mentor_${tarefa.id}">${tarefa.observacoes_mentor || ''}</textarea>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Observações do Cliente</label>
+                                                    <textarea class="form-control" rows="2" readonly 
+                                                        id="obs_cliente_${tarefa.id}">${tarefa.observacoes_cliente || '-'}</textarea>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Status</label>
+                                                    <select class="form-select" id="status_${tarefa.id}">
+                                                        <option value="a_iniciar" ${tarefa.status === 'a_iniciar' ? 'selected' : ''}>A Iniciar</option>
+                                                        <option value="em_andamento" ${tarefa.status === 'em_andamento' ? 'selected' : ''}>Em Andamento</option>
+                                                        <option value="concluido" ${tarefa.status === 'concluido' ? 'selected' : ''}>Concluído</option>
+                                                    </select>
+                                                </div>
+                                                <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        `).join('')}
-                    </div>
+                            `).join('')}
+                        </div>
+                    ` : `
+                        <div class="alert alert-info">
+                            Nenhuma tarefa cadastrada ainda.
+                        </div>
+                    `}
                 </div>
             </div>
         `;
