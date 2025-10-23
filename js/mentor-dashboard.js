@@ -1,17 +1,19 @@
 let usuarioLogado = null;
 
+// ID FIXO DO MENTOR (cole aqui o UUID do mentor)
+const MENTOR_ID_FIXO = '85de5f16-1f9e-4d0d-82c0-a2e639baae86'; // ← COLE O ID AQUI
+
 // Verificar autenticação
 async function verificarAutenticacao() {
     // Verificar se tem acesso direto (sem autenticação)
     const acessoDireto = localStorage.getItem('mentor_acesso_direto');
     
     if (acessoDireto === 'true') {
-        // Buscar primeiro mentor do sistema
+        // Buscar mentor pelo ID fixo
         const { data: mentor, error } = await supabase
             .from('appgi_mentoria_usuarios')
             .select('*')
-            .eq('tipo', 'mentor')
-            .limit(1)
+            .eq('id', MENTOR_ID_FIXO)
             .single();
         
         if (mentor) {
@@ -19,7 +21,7 @@ async function verificarAutenticacao() {
             document.getElementById('nomeUsuario').textContent = mentor.nome;
             carregarDashboard();
         } else {
-            alert('Nenhum mentor cadastrado no sistema. Por favor, cadastre um mentor primeiro.');
+            alert('Mentor não encontrado. Verifique o ID fixo no código.');
             window.location.href = 'index.html';
         }
         return;
@@ -33,7 +35,6 @@ async function verificarAutenticacao() {
         return;
     }
     
-    // Buscar dados do usuário
     const { data: usuario, error } = await supabase
         .from('appgi_mentoria_usuarios')
         .select('*')
@@ -48,6 +49,8 @@ async function verificarAutenticacao() {
     
     usuarioLogado = usuario;
     document.getElementById('nomeUsuario').textContent = usuario.nome;
+    carregarDashboard();
+}
     
     // Carregar dados do dashboard
     carregarDashboard();
