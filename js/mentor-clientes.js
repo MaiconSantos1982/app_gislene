@@ -830,7 +830,7 @@ function aplicarMascaraTelefone(event) {
     let valor = event.target.value.replace(/\D/g, ''); // Remove tudo que não é número
     
     if (valor.length <= 11) {
-        // Formato: (00) 00000.0000 ou (00) 0000.0000
+        // Formato: (00) 00000.00.00 ou (00) 0000.00.00
         valor = valor.replace(/^(\d{2})(\d)/g, '($1) $2');
         valor = valor.replace(/(\d)(\d{4})$/, '$1.$2');
         if (valor.length >= 14) {
