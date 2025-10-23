@@ -66,24 +66,64 @@
 </div>
 
                             <!-- Login Cliente -->
-                            <div class="tab-pane fade" id="cliente-login" role="tabpanel">
-                                <form id="formLoginCliente">
-                                    <div class="mb-3">
-                                        <label for="emailCliente" class="form-label">E-mail</label>
-                                        <input type="email" class="form-control" id="emailCliente" required>
-                                    </div>
-                                    <div class="mb-4">
-                                        <small class="text-muted">
-                                            Enviaremos um link de acesso para seu e-mail
-                                        </small>
-                                    </div>
-                                    <div class="d-grid">
-                                        <button type="submit" class="btn btn-primary">Enviar Link</button>
-                                    </div>
-                                </form>
-                            </div>
+<div class="tab-pane fade" id="cliente-login" role="tabpanel">
+    
+    <!-- Área de Login -->
+    <div id="areaLoginCliente">
+        <form id="formLoginCliente">
+            <div class="mb-3">
+                <label for="emailClienteLogin" class="form-label">E-mail</label>
+                <input type="email" class="form-control" id="emailClienteLogin" required>
+            </div>
+            <div class="mb-3">
+                <label for="senhaClienteLogin" class="form-label">Senha</label>
+                <input type="password" class="form-control" id="senhaClienteLogin" required>
+            </div>
+            <div class="d-grid mb-3">
+                <button type="submit" class="btn btn-primary">Entrar</button>
+            </div>
+            <div class="text-center">
+                <small class="text-muted">
+                    Primeiro acesso? 
+                    <a href="#" id="linkCriarConta" class="text-primary">Crie sua senha</a>
+                </small>
+            </div>
+        </form>
+    </div>
 
-                        </div>
+    <!-- Área de Criar Conta -->
+    <div id="areaCriarConta" style="display: none;">
+        <form id="formCriarConta">
+            <div class="mb-3">
+                <label for="emailClienteCadastro" class="form-label">E-mail Cadastrado</label>
+                <input type="email" class="form-control" id="emailClienteCadastro" required>
+                <small class="text-muted">Use o e-mail fornecido pelo seu mentor</small>
+            </div>
+            <div class="mb-3">
+                <label for="senhaClienteCadastro" class="form-label">Criar Senha</label>
+                <input type="password" class="form-control" id="senhaClienteCadastro" 
+                    minlength="6" required>
+                <small class="text-muted">Mínimo 6 caracteres</small>
+            </div>
+            <div class="mb-3">
+                <label for="confirmarSenha" class="form-label">Confirmar Senha</label>
+                <input type="password" class="form-control" id="confirmarSenha" 
+                    minlength="6" required>
+            </div>
+            <div class="d-grid mb-3">
+                <button type="submit" class="btn btn-primary">Criar Conta</button>
+            </div>
+            <div class="text-center">
+                <small class="text-muted">
+                    Já tem conta? 
+                    <a href="#" id="linkVoltarLogin" class="text-primary">Fazer login</a>
+                </small>
+            </div>
+        </form>
+    </div>
+
+</div>
+
 
                         <!-- Alert para mensagens -->
                         <div id="alertMessage" class="alert d-none mt-3" role="alert"></div>
