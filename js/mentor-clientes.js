@@ -297,6 +297,7 @@ async function verDetalhesCliente(clienteId) {
                 nicho_atuacao,
                 empresa,
                 usuario:usuario_id (
+                    id,
                     nome,
                     email,
                     telefone
@@ -326,6 +327,16 @@ async function verDetalhesCliente(clienteId) {
         }
         
         const processo = processos[0];
+        
+        // Salvar dados globais ANTES de abrir modal
+        clienteAtual = {
+            id: clienteId,
+            nicho_atuacao: cliente.nicho_atuacao,
+            empresa: cliente.empresa,
+            usuario: cliente.usuario
+        };
+        
+        processoAtual = processo;
         
         // Buscar tarefas
         const { data: tarefas, error: tarefasError } = await supabase
@@ -365,7 +376,12 @@ async function verDetalhesCliente(clienteId) {
                     </div>
                 </div>
                 <div class="col-12">
-                    <h6 class="fw-bold mb-3">Tarefas</h6>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold mb-0">Tarefas</h6>
+                        <button class="btn btn-sm btn-success" onclick="abrirAdicionarTarefa('${clienteId}', '${processo.id}')">
+                            <i class="bi bi-plus-lg"></i> Nova Tarefa
+                        </button>
+                    </div>
                     ${tarefas && tarefas.length > 0 ? `
                         <div class="accordion" id="accordionTarefas">
                             ${tarefas.map((tarefa, index) => `
@@ -438,7 +454,31 @@ async function verDetalhesCliente(clienteId) {
         `;
         
         document.getElementById('conteudoDetalhesCliente').innerHTML = conteudo;
+        
+        // Abrir modal
         new bootstrap.Modal(document.getElementById('modalDetalhesCliente')).show();
+        
+        // ADICIONAR LISTENERS APÓS ABRIR
+        setTimeout(() => {
+            const btnEditar = document.getElementById('btnEditarCliente');
+            const btnExcluir = document.getElementById('btnExcluirCliente');
+            
+            console.log('Botões encontrados:', btnEditar, btnExcluir);
+            
+            if (btnEditar) {
+                btnEditar.onclick = () => {
+                    console.log('Editar clicado');
+                    abrirEditarCliente(clienteId);
+                };
+            }
+            
+            if (btnExcluir) {
+                btnExcluir.onclick = () => {
+                    console.log('Excluir clicado');
+                    excluirCliente(clienteId);
+                };
+            }
+        }, 200);
         
     } catch (error) {
         console.error('Erro ao carregar detalhes:', error);
