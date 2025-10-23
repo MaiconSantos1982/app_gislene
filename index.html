@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Sistema de Mentoria</title>
+    <title>Login - Cliente</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -19,111 +19,66 @@
                 <!-- Logo/Título -->
                 <div class="text-center mb-5">
                     <h1 class="fw-bold">Mentoria</h1>
-                    <p class="text-muted">Sistema de Acompanhamento</p>
+                    <p class="text-muted">Área do Cliente</p>
                 </div>
 
                 <!-- Card de Login -->
                 <div class="card border-0 shadow-sm">
                     <div class="card-body p-4">
                         
-                        <!-- Tabs -->
-                        <ul class="nav nav-pills nav-fill mb-4" id="loginTabs" role="tablist">
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="mentor-tab" data-bs-toggle="pill" 
-                                    data-bs-target="#mentor-login" type="button" role="tab">
-                                    Mentor
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="cliente-tab" data-bs-toggle="pill" 
-                                    data-bs-target="#cliente-login" type="button" role="tab">
-                                    Cliente
-                                </button>
-                            </li>
-                        </ul>
+                        <!-- Área de Login -->
+                        <div id="areaLoginCliente">
+                            <form id="formLoginCliente">
+                                <div class="mb-3">
+                                    <label for="emailClienteLogin" class="form-label">E-mail</label>
+                                    <input type="email" class="form-control" id="emailClienteLogin" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="senhaClienteLogin" class="form-label">Senha</label>
+                                    <input type="password" class="form-control" id="senhaClienteLogin" required>
+                                </div>
+                                <div class="d-grid mb-3">
+                                    <button type="submit" class="btn btn-primary">Entrar</button>
+                                </div>
+                                <div class="text-center">
+                                    <small class="text-muted">
+                                        Primeiro acesso? 
+                                        <a href="#" id="linkCriarConta" class="text-primary">Crie sua senha</a>
+                                    </small>
+                                </div>
+                            </form>
+                        </div>
 
-                        <!-- Tab Content -->
-                        <div class="tab-content" id="loginTabContent">
-                            
-                            <!-- Login Mentor -->
-<div class="tab-pane fade show active" id="mentor-login" role="tabpanel">
-    <form id="formLoginMentor">
-        <div class="mb-3">
-            <label for="emailMentor" class="form-label">E-mail</label>
-            <input type="email" class="form-control" id="emailMentor">
-        </div>
-        <div class="mb-3">
-            <label for="senhaMentor" class="form-label">Senha</label>
-            <input type="password" class="form-control" id="senhaMentor">
-        </div>
-        <div class="mb-3">
-            <small class="text-muted">Deixe os campos vazios para acesso direto</small>
-        </div>
-        <div class="d-grid">
-            <button type="submit" class="btn btn-primary">Entrar</button>
-        </div>
-    </form>
-</div>
-
-                            <!-- Login Cliente -->
-<div class="tab-pane fade" id="cliente-login" role="tabpanel">
-    
-    <!-- Área de Login -->
-    <div id="areaLoginCliente">
-        <form id="formLoginCliente">
-            <div class="mb-3">
-                <label for="emailClienteLogin" class="form-label">E-mail</label>
-                <input type="email" class="form-control" id="emailClienteLogin" required>
-            </div>
-            <div class="mb-3">
-                <label for="senhaClienteLogin" class="form-label">Senha</label>
-                <input type="password" class="form-control" id="senhaClienteLogin" required>
-            </div>
-            <div class="d-grid mb-3">
-                <button type="submit" class="btn btn-primary">Entrar</button>
-            </div>
-            <div class="text-center">
-                <small class="text-muted">
-                    Primeiro acesso? 
-                    <a href="#" id="linkCriarConta" class="text-primary">Crie sua senha</a>
-                </small>
-            </div>
-        </form>
-    </div>
-
-    <!-- Área de Criar Conta -->
-    <div id="areaCriarConta" style="display: none;">
-        <form id="formCriarConta">
-            <div class="mb-3">
-                <label for="emailClienteCadastro" class="form-label">E-mail Cadastrado</label>
-                <input type="email" class="form-control" id="emailClienteCadastro" required>
-                <small class="text-muted">Use o e-mail fornecido pelo seu mentor</small>
-            </div>
-            <div class="mb-3">
-                <label for="senhaClienteCadastro" class="form-label">Criar Senha</label>
-                <input type="password" class="form-control" id="senhaClienteCadastro" 
-                    minlength="6" required>
-                <small class="text-muted">Mínimo 6 caracteres</small>
-            </div>
-            <div class="mb-3">
-                <label for="confirmarSenha" class="form-label">Confirmar Senha</label>
-                <input type="password" class="form-control" id="confirmarSenha" 
-                    minlength="6" required>
-            </div>
-            <div class="d-grid mb-3">
-                <button type="submit" class="btn btn-primary">Criar Conta</button>
-            </div>
-            <div class="text-center">
-                <small class="text-muted">
-                    Já tem conta? 
-                    <a href="#" id="linkVoltarLogin" class="text-primary">Fazer login</a>
-                </small>
-            </div>
-        </form>
-    </div>
-
-</div>
-
+                        <!-- Área de Criar Conta -->
+                        <div id="areaCriarConta" style="display: none;">
+                            <form id="formCriarConta">
+                                <div class="mb-3">
+                                    <label for="emailClienteCadastro" class="form-label">E-mail Cadastrado</label>
+                                    <input type="email" class="form-control" id="emailClienteCadastro" required>
+                                    <small class="text-muted">Use o e-mail fornecido pelo seu mentor</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="senhaClienteCadastro" class="form-label">Criar Senha</label>
+                                    <input type="password" class="form-control" id="senhaClienteCadastro" 
+                                        minlength="6" required>
+                                    <small class="text-muted">Mínimo 6 caracteres</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="confirmarSenha" class="form-label">Confirmar Senha</label>
+                                    <input type="password" class="form-control" id="confirmarSenha" 
+                                        minlength="6" required>
+                                </div>
+                                <div class="d-grid mb-3">
+                                    <button type="submit" class="btn btn-primary">Criar Conta</button>
+                                </div>
+                                <div class="text-center">
+                                    <small class="text-muted">
+                                        Já tem conta? 
+                                        <a href="#" id="linkVoltarLogin" class="text-primary">Fazer login</a>
+                                    </small>
+                                </div>
+                            </form>
+                        </div>
 
                         <!-- Alert para mensagens -->
                         <div id="alertMessage" class="alert d-none mt-3" role="alert"></div>
@@ -143,6 +98,6 @@
     
     <!-- Custom Scripts -->
     <script src="js/config.js"></script>
-    <script src="js/auth.js"></script>
+    <script src="js/auth-cliente.js"></script>
 </body>
 </html>
