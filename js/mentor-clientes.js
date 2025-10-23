@@ -237,12 +237,12 @@ document.getElementById('btnSalvarCliente')?.addEventListener('click', async () 
         if (tarefasError) throw tarefasError;
         
         // 5. Enviar Magic Link para o cliente
-        await supabase.auth.signInWithOtp({
-            email: dados.email,
-            options: {
-                emailRedirectTo: `${window.location.origin}/cliente-dashboard.html`
-            }
-        });
+        // await supabase.auth.signInWithOtp({
+        //    email: dados.email,
+        //    options: {
+        //        emailRedirectTo: `${window.location.origin}/cliente-dashboard.html`
+        //    }
+        //});
         
         // Sucesso
         alert('Cliente cadastrado com sucesso! Um e-mail de acesso foi enviado.');
